@@ -43,3 +43,43 @@ void printServerAddress(char *serverName, char *portStr) {
     // Free the memory allocated by getaddrinfo
     freeaddrinfo(result);
 }
+
+int reserveSocket(char *serverName, char *portStr) {
+    int status;
+    int sfd;  // Socket file descriptor
+    struct addrinfo *ptr;
+
+    struct addrinfo hints;
+    struct addrinfo *result;
+
+    // Initialize hints to zero
+    memset(&hints, 0, sizeof(struct addrinfo));
+
+    // Set the desired socket characteristics
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM; // Use Datagram sockets
+    hints.ai_protocol = IPPROTO_UDP; // Use UDP protocol
+
+    // Obtain address information for the TFTP server
+    status = getaddrinfo(serverName, portStr, &hints, &result);
+    if (status != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
+        exit(EXIT_FAILURE);
+    }
+
+    ptr = result;
+
+    // Iterate over the address information to create a socket
+    while (ptr != NULL) {
+        sfd = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
+        if (sfd != -1) { 
+            break;  // Break out of the loop once a valid socket is created
+        }
+        ptr = ptr->ai_next;
+    }
+
+    // Free the memory allocated by getaddrinfo
+    freeaddrinfo(result);
+    
+    return sfd;
+}

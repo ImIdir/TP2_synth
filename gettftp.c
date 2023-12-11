@@ -31,4 +31,9 @@ printf("Try on server : %s on port %d\n", serverName, port);
 
 //Call of printServerAddress to display the server's address
 printServerAddress(argv[1], argv[2]);
+
+//Call of reserveSocket to display the server's address
+int sfd;
+sfd=reserveSocket(argv[1],argv[2]);
+printf("Socket %i \n ", sfd);
 }

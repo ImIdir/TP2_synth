@@ -13,3 +13,4 @@
 #define PORT 1069
 
 void printServerAddress(char *serverName, char *portStr);
+int reserveSocket(char *serverName, char *portStr);
