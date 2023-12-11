@@ -28,4 +28,7 @@ int main (int argc, char * argv[]){
 		port = atoi(portStr);
 	}	
 printf("Try on server : %s on port %d\n", serverName, port);
+
+//Call of printServerAddress to display the server's address
+printServerAddress(argv[1], argv[2]);
 }
