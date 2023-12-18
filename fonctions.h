@@ -18,3 +18,7 @@
 void printServerAddress(char *serverName, char *portStr);
 void reserveSocket(char *serverName, char *portStr, int *sfd, struct addrinfo **result);
 void sendRRQ(int sfd, char *fileName, int mode, struct addrinfo *result);
+int receiveOneBlock(int sfd, int ffd);
+void sendAck(int sfd, int blockNumber,struct addrinfo *result);
+void receiveAndAcknowledge(int sfd, char *fileName, struct addrinfo *result);
+

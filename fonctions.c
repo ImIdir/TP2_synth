@@ -102,3 +102,83 @@ void sendRRQ(int sfd, char *fileName, int mode, struct addrinfo *result) {
         exit(EXIT_FAILURE);
     }
 }
+
+void receiveAndAcknowledge(int sfd, char *fileName, struct addrinfo *result) {
+    int ffd;  // File descriptor for the received file
+    int blockNumber = 1;  // Initial block number
+    int lastBlockSize = 0;  // Size of the last block received
+
+    // Open the file for writing
+    ffd = open(fileName, O_CREAT | O_TRUNC | O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
+    if (ffd == -1) {
+        perror("Error opening file for writing");
+        exit(EXIT_FAILURE);
+    }
+
+    // Receive one data block
+    int count = receiveOneBlock(sfd, ffd);
+
+    // Send acknowledgment for the received block
+    sendAck(sfd, blockNumber, result);
+
+    // Close the file
+    close(ffd);
+
+    printf("File '%s' received successfully.\n", fileName);
+    printf("Last block size: %d bytes\n", count - 4);  // Adjust for the block header
+}
+
+
+void sendAck(int sfd, int blockNumber,struct addrinfo *result) {
+    // Construct the ACK packet
+    char ackPacket[4];
+    memset(ackPacket, 0, sizeof(ackPacket));
+    ackPacket[0] = 0;  // Opcode for ACK
+    ackPacket[1] = 4;
+    ackPacket[2] = (blockNumber >> 8) & 0xFF;  // High-order byte
+    ackPacket[3] = blockNumber & 0xFF;         // Low-order byte
+
+    // Get the first address from the server's address information
+    struct addrinfo *ptr = result;
+    if (ptr == NULL) {
+        fprintf(stderr, "No address information available\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Send the ACK packet to the server
+    ssize_t sentBytes = sendto(sfd, ackPacket, sizeof(ackPacket), 0, ptr->ai_addr, ptr->ai_addrlen);
+    if (sentBytes == -1) {
+        perror("Error sending ACK");
+        exit(EXIT_FAILURE);
+    }
+}
+
+int receiveOneBlock(int sfd, int ffd) {
+    int count;
+    struct sockaddr_storage addr;
+    socklen_t add_size = sizeof(addr);
+    char *buf;
+    static int blockNumber = 1;
+
+    buf = calloc(MAX_BUF_RECEIVE, sizeof(char));
+
+    count = recvfrom(sfd, buf, MAX_BUF_RECEIVE, 0, (struct sockaddr *)&addr, &add_size);
+
+    if (count == -1) {
+        perror("Error receiving data");
+        exit(EXIT_FAILURE);
+    }
+
+    if (buf[0] != 0 || buf[1] != 3) {
+        fprintf(stderr, "Error from server: %s\n", buf + 4);
+        exit(EXIT_FAILURE);
+    }
+
+    free(buf);
+
+    return count;
+}
+
+
+
+

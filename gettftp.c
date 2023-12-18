@@ -35,11 +35,32 @@ int main (int argc, char * argv[]){
 char *serverAddress = argv[1];
 char *fileName = argv[2];
 int sfd;
+int ffd;
+int blockNumber =0;
 struct addrinfo *result;
 reserveSocket(argv[1], PORT, &sfd, &result);
 
 // Step A: Send RRQ
 sendRRQ(sfd, argv[2], 0, result);
+//Step B
+receiveAndAcknowledge(sfd, fileName, result);
+//Step C
+while (1) {
+        int count = receiveOneBlock(sfd, ffd);  // Receive one data block
+
+        if (count < MAX_BUF_RECEIVE) {
+            // Last block received
+            break;
+        }
+
+        // Send acknowledgment for the received block
+        sendAck(sfd, blockNumber, result);
+        blockNumber++;
+    }
+
+//Close socket
+close(sfd);
+printf("ok \n");
 
 return 0;
 }
